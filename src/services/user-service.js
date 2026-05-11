@@ -58,6 +58,28 @@ class UserService {
             throw error;
         }
     }
+
+    async signIn(email, plainPassword){
+        try{
+            // Step 1: fetch user from database using email
+            const user = await this.userRepository.getUserByEmail(email); 
+
+            // Step 2: if user exists then compare the incoming plain password with stored encrypted password
+            const passwordmatch = this.checkPassword(plainPassword, user.password); // user object has encrypted pwd stored in db.
+
+            if(!passwordmatch){
+                console.log("Password doesn't match");
+                throw {error: "Incorrect password"};
+            }
+            // Step 3: if password matches then create a JWT token and return to the user.
+            const token = this.createToken({id: user.id, email: user.email}); //cant send sequelize object,sending specific data 
+            return token;
+        }
+        catch (error) {
+            console.log("Something went wrong in the sign in process");
+            throw error;
+        }
+    }
 }
 
 module.exports = UserService;
