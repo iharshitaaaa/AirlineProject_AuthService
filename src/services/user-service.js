@@ -2,6 +2,8 @@ const UserRepository = require('../repository/user-repository');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { JWT_KEY } = require('../config/serverConfig');
+const AppErrors = require('../utils/error-handler');
+
 class UserService {
     constructor() {
         this.userRepository = new UserRepository();
@@ -12,8 +14,15 @@ class UserService {
             const user = await this.userRepository.createUser(data);
             return user;
         } catch (error) {
-            console.log("Something went wrong in the service layer");
-            throw error;
+            if(error.name == 'SequelizeValidationError'){
+                throw error; // it's already a custom error with message & status code, we can directly throw it to the controller.
+            }
+            throw new AppErrors(
+                'Server Error',
+                'Something went wrong in service',
+                500,
+                'Logical Issue found',
+            );
         }
     }
 
@@ -96,6 +105,16 @@ class UserService {
         }
         catch (error) {
             console.log("Something went wrong in the sign in process");
+            throw error;
+        }
+    }
+
+    async isAdmin(userId){
+        try{
+            return this.userRepository.isAdmin(userId);
+        }
+        catch (error) {
+            console.log("Something went wrong in the admin verification process");
             throw error;
         }
     }
